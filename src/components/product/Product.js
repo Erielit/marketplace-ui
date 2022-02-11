@@ -1,10 +1,19 @@
 import React, { useEffect, useState } from "react";
 import DataTable from "react-data-table-component";
 import styled, { keyframes } from "styled-components";
-import { Card, Col, Row } from "react-bootstrap";
+import {
+  Button,
+  Card,
+  Col,
+  Form,
+  FormControl,
+  InputGroup,
+  Row,
+} from "react-bootstrap";
 import axios from "../../shared/plugins/axios";
 import { ButtonCircle } from "../../shared/components/ButtonCircle";
 import { ProductForm } from "./components/ProductForm";
+import FeatherIcon from "feather-icons-react";
 
 const rotate360 = keyframes`
     from {
@@ -61,19 +70,25 @@ const CustomLoader = () => (
 );
 
 const FilterComponent = ({ filterText, onFilter, onClear }) => (
-  <>
-    <TextField
-      id="search"
-      type="text"
-      placeholder="Filter By Name"
-      aria-label="Search Input"
-      value={filterText}
-      onChange={onFilter}
-    />
-    <ClearButton type="button" onClick={onClear}>
-      X
-    </ClearButton>
-  </>
+  <Row>
+    <Col>
+      <InputGroup className="mb-3">
+        <FormControl
+          id="search"
+          type="text"
+          placeholder="Buscar por nombre"
+          aria-label="Buscar..."
+          value={filterText}
+          onChange={onFilter}
+        />
+        <InputGroup.Text>
+          <Button type="button" onClick={onClear} size="sm" variant="light">
+            <FeatherIcon icon="x" />
+          </Button>
+        </InputGroup.Text>
+      </InputGroup>
+    </Col>
+  </Row>
 );
 
 const columns = [
@@ -95,8 +110,17 @@ const columns = [
   },
   {
     name: "Categoría",
+    selector: (row) => row.subcategory.category.description,
+    sortable: true,
+  },
+  {
+    name: "Subategoría",
     selector: (row) => row.subcategory.description,
     sortable: true,
+  },
+  {
+    name: "Acciones",
+    cell: (row) => {},
   },
 ];
 
@@ -135,7 +159,7 @@ export const Product = () => {
   const getProducts = async () => {
     return await axios({
       method: "GET",
-      url: "/product/all",
+      url: "/product/",
     });
   };
 
@@ -175,7 +199,9 @@ export const Product = () => {
             noDataComponent={"Sin registros"}
             pagination
             paginationComponentOptions={defaultsPagination}
+            subHeader
             subHeaderComponent={subHeaderComponentMemo}
+            persistTableHead
           />
         </Card.Body>
       </Card>
