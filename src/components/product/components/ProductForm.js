@@ -1,15 +1,36 @@
 import React, { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
-import { Button, Col, Form, Modal, Row, Spinner } from "react-bootstrap";
+import { Button, Col, Form, Modal, Row } from "react-bootstrap";
 import FeatherIcon from "feather-icons-react";
-import "../../../shared/button-circle.css";
+import "../../../shared/custom-styles.css";
 import axios from "../../../shared/plugins/axios";
+import Alert, {
+  msjConfirmacion,
+  titleConfirmacion,
+  msjExito,
+  titleExito,
+  msjError,
+  titleError,
+} from "../../../shared/plugins/alert";
 
-export const ProductForm = ({ isOpen, handleClose }) => {
+export const ProductForm = ({
+  isOpen,
+  handleClose,
+  setProducts,
+  getProducts,
+}) => {
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [fileBase64, setFileBase64] = useState("");
+
+  const saveProduct = async (product) => {
+    return await axios({
+      method: "POST",
+      url: "/product/",
+      data: JSON.stringify(product),
+    });
+  };
 
   const getCategories = async () => {
     return await axios({ method: "GET", url: "/category/" });
@@ -54,13 +75,72 @@ export const ProductForm = ({ isOpen, handleClose }) => {
       subcategory: yup.number().required("Campo obligatorio"),
     }),
     onSubmit: (values) => {
-      console.log("Sdfsdf");
-      console.log(values);
+      const product = {
+        ...values,
+        category: { id: parseInt(values.category) },
+        subcategory: { id: parseInt(values.subcategory) },
+        file: fileBase64.replace(/^data:image\/\w+;base64,/, ""),
+      };
+      Alert.fire({
+        title: titleConfirmacion,
+        html: msjConfirmacion,
+        icon: "warning",
+        confirmButtonColor: "#009574",
+        confirmButtonText: "Aceptar",
+        cancelButtonColor: "#DD6B55",
+        cancelButtonText: "Cancelar",
+        reverseButtons: true,
+        backdrop: true,
+        showCancelButton: true,
+        showLoaderOnConfirm: true,
+        preConfirm: () => {
+          return saveProduct(product)
+            .then((response) => {
+              console.log(response);
+              if (!response.error) {
+                getProducts()
+                  .then((response) => {
+                    setProducts(response.data);
+                  })
+                  .catch((error) => {});
+                Alert.fire({
+                  title: titleExito,
+                  text: msjExito,
+                  icon: "success",
+                  confirmButtonColor: "#3085d6",
+                  confirmButtonText: "Aceptar",
+                }).then((result) => {
+                  if (result.isConfirmed) {
+                    cancelRegistration();
+                  }
+                });
+              } else {
+                Alert.fire({
+                  title: titleError,
+                  text: msjError,
+                  icon: "error",
+                  confirmButtonColor: "#3085d6",
+                  confirmButtonText: "Aceptar",
+                }).then((result) => {
+                  if (result.isConfirmed) {
+                    cancelRegistration();
+                  }
+                });
+              }
+              return response;
+            })
+            .catch((error) => {
+              console.log(error);
+            });
+        },
+        allowOutsideClick: () => !alert.isLoading(),
+      });
     },
   });
 
   const cancelRegistration = () => {
     formik.resetForm();
+    setSubcategories([]);
     handleClose();
   };
 
@@ -73,13 +153,13 @@ export const ProductForm = ({ isOpen, handleClose }) => {
   }, []);
 
   const handleChangeFile = (event) => {
+    formik.handleChange(event);
     const file = event.target.files[0];
     let reader = new FileReader();
     reader.onload = (data) => {
       setFileBase64(data.target.result);
     };
     reader.readAsDataURL(file);
-    formik.handleChange(event);
   };
 
   const handleCategoryChange = async (e) => {
@@ -98,20 +178,20 @@ export const ProductForm = ({ isOpen, handleClose }) => {
 
   return (
     <div>
-      <Form onSubmit={formik.handleSubmit}>
-        <Modal
-          size="lg"
-          backdrop="static"
-          keyboard={false}
-          show={isOpen}
-          onHide={cancelRegistration}
-        >
-          <Modal.Header closeButton>
-            <Modal.Title>Registrar producto</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
+      <Modal
+        size="lg"
+        backdrop="static"
+        keyboard={false}
+        show={isOpen}
+        onHide={cancelRegistration}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Registrar producto</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={formik.handleSubmit}>
             <Form.Group className="mb-3">
-              <Form.Label>Nombre</Form.Label>
+              <Form.Label className="form-label">Nombre</Form.Label>
               <Form.Control
                 type="text"
                 placeholder="Taza"
@@ -124,7 +204,7 @@ export const ProductForm = ({ isOpen, handleClose }) => {
               ) : null}
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Descripción</Form.Label>
+              <Form.Label className="form-label">Descripción</Form.Label>
               <Form.Control
                 className="form-control"
                 type="text"
@@ -139,7 +219,7 @@ export const ProductForm = ({ isOpen, handleClose }) => {
               ) : null}
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Foto</Form.Label>
+              <Form.Label className="form-label">Foto</Form.Label>
               <Form.Control
                 className="form-control"
                 accept="image/*"
@@ -156,7 +236,7 @@ export const ProductForm = ({ isOpen, handleClose }) => {
             <Form.Group className="mb-3">
               <Row>
                 <Col>
-                  <Form.Label>Existencias</Form.Label>
+                  <Form.Label className="form-label">Existencias</Form.Label>
                   <Form.Control
                     className="form-control"
                     type="number"
@@ -170,7 +250,7 @@ export const ProductForm = ({ isOpen, handleClose }) => {
                   ) : null}
                 </Col>
                 <Col>
-                  <Form.Label>Precio</Form.Label>
+                  <Form.Label className="form-label">Precio</Form.Label>
                   <Form.Control
                     className="form-control"
                     type="number"
@@ -188,7 +268,7 @@ export const ProductForm = ({ isOpen, handleClose }) => {
             <Form.Group className="mb-3">
               <Row>
                 <Col>
-                  <Form.Label>Categoría</Form.Label>
+                  <Form.Label className="form-label">Categoría</Form.Label>
                   <Form.Select
                     aria-label="Seleccionar categoría"
                     value={formik.values.category}
@@ -207,12 +287,13 @@ export const ProductForm = ({ isOpen, handleClose }) => {
                   ) : null}
                 </Col>
                 <Col>
-                  <Form.Label>Subcategoría</Form.Label>
+                  <Form.Label className="form-label">Subcategoría</Form.Label>
                   <Form.Select
                     aria-label="Seleccionar subcategoría"
                     name="subcategory"
                     value={formik.values.subcategory}
                     onChange={formik.handleChange}
+                    disabled={subcategories.length === 0}
                   >
                     <option value={""}>Seleccionar...</option>
                     {subcategories.map((item) => (
@@ -229,25 +310,30 @@ export const ProductForm = ({ isOpen, handleClose }) => {
                 </Col>
               </Row>
             </Form.Group>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="danger" onClick={handleClose}>
-              <FeatherIcon icon="x" /> &nbsp; Cerrar
-            </Button>
-            {formik.isValid + ""}
-            <Button variant="success" type="submit" disabled={!formik.isValid}>
-              {formik.isSubmitting ? (
-                <Spinner animation="border" role="status"></Spinner>
-              ) : (
-                <>
-                  <FeatherIcon icon="check" />
-                  &nbsp; Registrar
-                </>
-              )}
-            </Button>
-          </Modal.Footer>
-        </Modal>
-      </Form>
+            <Form.Group>
+              <Row className="mt-4 mb-2">
+                <Col className="text-end">
+                  <Button
+                    variant="danger"
+                    onClick={cancelRegistration}
+                    className={"me-3"}
+                  >
+                    <FeatherIcon icon="x" /> &nbsp; Cerrar
+                  </Button>
+                  <Button
+                    variant="success"
+                    type="submit"
+                    disabled={!formik.isValid}
+                  >
+                    <FeatherIcon icon="check" />
+                    &nbsp; Registrar
+                  </Button>
+                </Col>
+              </Row>
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 };

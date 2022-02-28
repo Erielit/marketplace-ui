@@ -1,128 +1,21 @@
 import React, { useEffect, useState } from "react";
 import DataTable from "react-data-table-component";
-import styled, { keyframes } from "styled-components";
-import {
-  Button,
-  Card,
-  Col,
-  Form,
-  FormControl,
-  InputGroup,
-  Row,
-} from "react-bootstrap";
+import { Badge, Card, Col, Row } from "react-bootstrap";
 import axios from "../../shared/plugins/axios";
 import { ButtonCircle } from "../../shared/components/ButtonCircle";
 import { ProductForm } from "./components/ProductForm";
-import FeatherIcon from "feather-icons-react";
-
-const rotate360 = keyframes`
-    from {
-        transform: rotate(0deg);
-    } to {
-        transform: rotate(360deg);
-    }`;
-
-const Spinner = styled.div`
-  margin: 16px;
-  animation: ${rotate360} 1s linear infinite;
-  transform: translateZ(0);
-  border-top: 2px solid grey;
-  border-right: 2px solid grey;
-  border-bottom: 2px solid grey;
-  border-left: 4px solid black;
-  background: transparent;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-`;
-
-const TextField = styled.input`
-  height: 32px;
-  width: 200px;
-  border-radius: 3px;
-  border-top-left-radius: 5px;
-  border-bottom-left-radius: 5px;
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-  border: 1px solid #e5e5e5;
-  padding: 0 32px 0 16px;
-  &:hover {
-    cursor: pointer;
-  }
-`;
-const ClearButton = styled.button`
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-  border-top-right-radius: 5px;
-  border-bottom-right-radius: 5px;
-  height: 34px;
-  width: 32px;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const CustomLoader = () => (
-  <div style={{ padding: "24px" }}>
-    <Spinner />
-  </div>
-);
-
-const FilterComponent = ({ filterText, onFilter, onClear }) => (
-  <Row>
-    <Col>
-      <InputGroup className="mb-3">
-        <FormControl
-          id="search"
-          type="text"
-          placeholder="Buscar por nombre"
-          aria-label="Buscar..."
-          value={filterText}
-          onChange={onFilter}
-        />
-        <InputGroup.Text>
-          <Button type="button" onClick={onClear} size="sm" variant="light">
-            <FeatherIcon icon="x" />
-          </Button>
-        </InputGroup.Text>
-      </InputGroup>
-    </Col>
-  </Row>
-);
-
-const columns = [
-  {
-    key: "Nombre",
-    name: "Nombre",
-    selector: (row) => row.name,
-    sortable: true,
-  },
-  {
-    name: "Price",
-    selector: (row) => row.price,
-    sortable: true,
-  },
-  {
-    name: "Estado",
-    selector: (row) => row.status.description,
-    sortable: true,
-  },
-  {
-    name: "Categoría",
-    selector: (row) => row.subcategory.category.description,
-    sortable: true,
-  },
-  {
-    name: "Subategoría",
-    selector: (row) => row.subcategory.description,
-    sortable: true,
-  },
-  {
-    name: "Acciones",
-    cell: (row) => {},
-  },
-];
+import { CustomLoader } from "../../shared/components/CustomLoader";
+import { FilterComponent } from "../../shared/components/FilterComponent";
+import { useNavigate } from "react-router-dom";
+import Alert, {
+  msjConfirmacion,
+  titleConfirmacion,
+  msjExito,
+  titleExito,
+  msjError,
+  titleError,
+} from "../../shared/plugins/alert";
+import { ProductDetails } from "./components/ProductDetails";
 
 const defaultsPagination = {
   rowsPerPageText: "Registros por página:",
@@ -130,13 +23,15 @@ const defaultsPagination = {
 };
 
 export const Product = () => {
+  const navigation = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
-  const [data, setData] = useState([]);
-  const [show, setShow] = useState(false);
-  const handleClose = () => setShow(false);
-  const handleOpen = () => setShow(true);
+  const [products, setProducts] = useState([]);
+  const [formProduct, setFormProduct] = useState(false);
   const [filterText, setFilterText] = useState("");
-  const filteredProducts = data.filter(
+  const [isOpenDetails, setIsOpenDetails] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState({});
+
+  const filteredProducts = products.filter(
     (item) =>
       item.name && item.name.toLowerCase().includes(filterText.toLowerCase())
   );
@@ -156,35 +51,209 @@ export const Product = () => {
     );
   }, [filterText]);
 
-  const getProducts = async () => {
-    return await axios({
+  const getProducts = () => {
+    axios({
       method: "GET",
       url: "/product/",
-    });
+    })
+      .then((response) => {
+        setProducts(response.data);
+        setIsLoading(false);
+      })
+      .catch(() => {});
   };
 
   useEffect(() => {
     setIsLoading(true);
-    getProducts()
-      .then((data) => {
-        setData(data.data);
-      })
-      .catch(console.log);
-    setIsLoading(false);
+    getProducts();
   }, []);
+
+  const deleteProduct = (product) => {
+    return axios({
+      method: "PUT",
+      url: `/product/`,
+      data: JSON.stringify(product),
+    })
+      .then((response) => {
+        if (!response.error) {
+          let list = [];
+          if (product.status.description === "Activo") {
+            list = [
+              {
+                ...product,
+              },
+              ...products.filter((it) => it.id !== product.id),
+            ];
+          } else {
+            list = [
+              ...products.filter((it) => it.id !== product.id),
+              {
+                ...product,
+              },
+            ];
+          }
+          setProducts(list);
+          Alert.fire({
+            title: titleExito,
+            text: msjExito,
+            icon: "success",
+            confirmButtonColor: "#3085d6",
+            confirmButtonText: "Aceptar",
+          });
+        } else {
+          Alert.fire({
+            title: titleError,
+            text: msjError,
+            icon: "error",
+            confirmButtonColor: "#3085d6",
+            confirmButtonText: "Aceptar",
+          });
+        }
+        return response;
+      })
+      .catch((error) => {
+        if (error.response.status === 500) {
+          Alert.fire({
+            title: titleError,
+            text: msjError,
+            icon: "error",
+            confirmButtonColor: "#3085d6",
+            confirmButtonText: "Aceptar",
+          });
+        }
+      });
+  };
+
+  const columns = [
+    {
+      key: "Nombre",
+      name: "Nombre",
+      selector: (row) => row.name,
+      sortable: true,
+    },
+    {
+      name: "Price",
+      selector: (row) => row.price,
+      sortable: true,
+    },
+    {
+      name: "Categoría",
+      selector: (row) => row.subcategory?.category?.description,
+      sortable: true,
+    },
+    {
+      name: "Subategoría",
+      selector: (row) => row.subcategory?.description,
+      sortable: true,
+    },
+    {
+      name: "Estado",
+      cell: (row) => (
+        <>
+          {row.status.description === "Activo" ? (
+            <Badge pill bg="success">
+              Activo
+            </Badge>
+          ) : (
+            <Badge pill bg="secondary">
+              Inactivo
+            </Badge>
+          )}
+        </>
+      ),
+      sortable: true,
+    },
+    {
+      name: "Acciones",
+      cell: (row) => (
+        <>
+          <ButtonCircle
+            type={"btn btn-circle me-1 btn-info"}
+            icon="search"
+            onClickFunct={() => {
+              setSelectedProduct(row);
+              setIsOpenDetails(true);
+            }}
+            size={18}
+          />
+          <ButtonCircle
+            type={"btn btn-circle me-1 btn-warning"}
+            icon="edit"
+            onClickFunct={() => {
+              let productEdit = {
+                ...row,
+                subcategory: row.subcategory.id,
+                category: row.subcategory.category.id,
+                file: "",
+              };
+              let key = "selectedProduct";
+              localStorage.setItem(key, JSON.stringify(productEdit));
+              navigation(`/update-product/${key}`);
+            }}
+            size={18}
+          />
+          <ButtonCircle
+            type={
+              "btn btn-circle me-1 " +
+              (row.status.description === "Activo"
+                ? "btn-success"
+                : "btn-danger")
+            }
+            icon={
+              row.status.description === "Activo" ? "check-circle" : "trash-2"
+            }
+            size={18}
+            onClickFunct={() => {
+              Alert.fire({
+                title: titleConfirmacion,
+                html: msjConfirmacion,
+                icon: "warning",
+                confirmButtonColor: "#009574",
+                confirmButtonText: "Aceptar",
+                cancelButtonColor: "#DD6B55",
+                cancelButtonText: "Cancelar",
+                reverseButtons: true,
+                backdrop: true,
+                showCancelButton: true,
+                showLoaderOnConfirm: true,
+                preConfirm: () => {
+                  let status =
+                    row.status.description === "Activo"
+                      ? { id: 2, description: "Inactivo" }
+                      : { id: 1, description: "Activo" };
+                  return deleteProduct({
+                    ...row,
+                    status,
+                    file: row.fileBase64,
+                  });
+                },
+                allowOutsideClick: () => !alert.isLoading(),
+              });
+            }}
+          />
+        </>
+      ),
+    },
+  ];
 
   return (
     <>
       <Card>
         <Card.Header as="h5">
-          <Row>
+          <Row className="mt-1">
             <Col>Productos</Col>
             <Col className="text-end">
-              <ProductForm isOpen={show} handleClose={handleClose} />
+              <ProductForm
+                isOpen={formProduct}
+                handleClose={() => setFormProduct(false)}
+                setProducts={setProducts}
+                getProducts={getProducts}
+              />
               <ButtonCircle
-                type={"btn-success"}
+                type={"btn btn-circle btn-success"}
                 icon="plus"
-                onClickFunct={handleOpen}
+                size={24}
+                onClickFunct={() => setFormProduct(true)}
               />
             </Col>
           </Row>
@@ -205,6 +274,11 @@ export const Product = () => {
           />
         </Card.Body>
       </Card>
+      <ProductDetails
+        isOpen={isOpenDetails}
+        onClose={() => setIsOpenDetails(false)}
+        {...selectedProduct}
+      />
     </>
   );
 };

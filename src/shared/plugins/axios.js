@@ -7,12 +7,9 @@ const requestHandler = (request) => {
   request.headers["Accept"] = "application/json";
   request.headers["Content-Type"] = "application/json";
   const session = JSON.parse(localStorage.getItem("user")) || null;
-  if (session) {
-    request.headers[
-      "Authorization"
-    ] = `${session.token_type} ${session.access_token}`;
+  if (session?.logged) {
+    request.headers["Authorization"] = `Bearer ${session.token}`;
   }
-
   return request;
 };
 
@@ -21,10 +18,15 @@ const errorResponseHandler = (error) => {
 };
 
 const successResponseHandler = (response) => {
-  return response.data;
+  return Promise.resolve(response.data);
 };
 
-axios.interceptors.request.use((request) => requestHandler(request));
+axios.interceptors.request.use(
+  (request) => requestHandler(request),
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 axios.interceptors.response.use(
   (response) => successResponseHandler(response),

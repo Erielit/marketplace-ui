@@ -1,16 +1,25 @@
 import React, { useEffect, useState } from "react";
 import { CardGroup, Col, Row, Spinner } from "react-bootstrap";
 import { CardComponent } from "../../shared/components/CardComponent";
-import { getProducts } from "./homeController";
+import axios from "../../shared/plugins/axios";
 
 export const HomeScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [products, setProducts] = useState([]);
   const productList = async () => {
-    let data = await getProducts();
-    setProducts(data || []);
+    await axios({
+      method: "GET",
+      url: "/product/",
+    })
+      .then((response) => {
+        setProducts(response.data || []);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   };
   useEffect(() => {
+    document.title = "MT | Inicio";
     setIsLoading(true);
     productList();
     setIsLoading(false);
@@ -34,10 +43,10 @@ export const HomeScreen = () => {
         </Col>
       </Row>
       <CardGroup>
-        <Row>
+        <Row xs={1} md={2} lg={3} xl={4} className="g-4">
           {products.map((product) => (
             <Col key={product.id}>
-              <CardComponent product={product} />
+              <CardComponent {...product} />
             </Col>
           ))}
         </Row>

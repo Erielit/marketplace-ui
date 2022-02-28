@@ -1,24 +1,25 @@
-import React from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import React, { useEffect, useReducer } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { Container } from "react-bootstrap";
-import { HomeScreen } from "./components/home/HomeScreen";
-import { NavBar } from "./shared/components/NavBar";
-import { Contact } from "./components/contact/Contact";
-import { Product } from "./components/product/Product";
+import { AuthContext } from "./components/auth/authContext";
+import { AppRouter } from "./components/routes/AppRouter";
+import { authReducer } from "./components/auth/authReducer";
+
+const init = () => {
+  return JSON.parse(localStorage.getItem("user")) || { logged: false };
+};
 
 const App = () => {
+  const [user, dispatch] = useReducer(authReducer, {}, init);
+  console.log(user);
+  useEffect(() => {
+    if (!user) return;
+    localStorage.setItem("user", JSON.stringify(user));
+  }, [user]);
+
   return (
-    <Router>
-      <NavBar />
-      <Container style={{ marginTop: "20px" }} className="mt5">
-        <Routes>
-          <Route path="/" element={<HomeScreen />} />
-          <Route path="/products" element={<Product />} />
-          <Route path="/contact" element={<Contact />} />
-        </Routes>
-      </Container>
-    </Router>
+    <AuthContext.Provider value={{ dispatch, user }}>
+      <AppRouter />
+    </AuthContext.Provider>
   );
 };
 

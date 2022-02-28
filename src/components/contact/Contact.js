@@ -1,5 +1,6 @@
 import React from "react";
-import { Form } from "react-bootstrap";
+import { Form, Row, Col, Button } from "react-bootstrap";
+import FeatherIcon from "feather-icons-react";
 import "../../assets/css/main.css";
 import "../../assets/css/util.css";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -14,20 +15,30 @@ export const Contact = () => {
       <div className="container-contact100">
         <div className="wrap-contact100">
           <Form className="contact100-form">
-            <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
+            <Form.Group className="mb-4" controlId="exampleForm.ControlInput1">
               <Form.Label>Nombre completo</Form.Label>
               <Form.Control type="text" placeholder="Mike" />
             </Form.Group>
-            <Form.Group className="mb-3" controlId="mail">
+            <Form.Group className="mb-4" controlId="mail">
               <Form.Label>Correo electrónico</Form.Label>
               <Form.Control type="text" placeholder="mike@email.com" />
             </Form.Group>
             <Form.Group
-              className="mb-3"
+              className="mb-4"
               controlId="exampleForm.ControlTextarea1"
             >
               <Form.Label>Comentarios</Form.Label>
               <Form.Control as="textarea" rows={3} />
+            </Form.Group>
+            <Form.Group>
+              <Row>
+                <Col className="text-end mb-4">
+                  <Button variant="success">
+                    <FeatherIcon icon="send" />
+                    &nbsp; Enviar
+                  </Button>
+                </Col>
+              </Row>
             </Form.Group>
           </Form>
           <div className="contact100-more flex-col-c-m" style={bg}>
