@@ -4,7 +4,11 @@ import { Link } from "react-router-dom";
 
 export const CardComponent = ({ name, id, fileBase64, price }) => {
   return (
-    <Card key={id} style={{ width: "18rem" }}>
+    <Card
+      key={id}
+      style={{ width: "18rem" }}
+      className="animate__animated animate__fadeIn"
+    >
       <Card.Img
         variant="top"
         className="rounded"

@@ -43,13 +43,11 @@ export const HomeScreen = () => {
         </Col>
       </Row>
       <CardGroup>
-        <Row xs={1} md={2} lg={3} xl={4} className="g-4">
-          {products.map((product) => (
-            <Col key={product.id}>
-              <CardComponent {...product} />
-            </Col>
-          ))}
-        </Row>
+        {products.map((product) => (
+          <Col key={product.id}>
+            <CardComponent {...product}  />
+          </Col>
+        ))}
       </CardGroup>
     </>
   );

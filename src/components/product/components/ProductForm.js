@@ -14,12 +14,7 @@ import Alert, {
   titleError,
 } from "../../../shared/plugins/alert";
 
-export const ProductForm = ({
-  isOpen,
-  handleClose,
-  setProducts,
-  getProducts,
-}) => {
+export const ProductForm = ({ isOpen, handleClose, getProducts }) => {
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [fileBase64, setFileBase64] = useState("");
@@ -32,12 +27,20 @@ export const ProductForm = ({
     });
   };
 
-  const getCategories = async () => {
-    return await axios({ method: "GET", url: "/category/" });
+  const getCategories = () => {
+    return axios({ method: "GET", url: "/category/" })
+      .then((data) => {
+        setCategories(data.data);
+      })
+      .catch(console.log);
   };
 
-  const getSubcategories = async (value) => {
-    return await axios({ method: "GET", url: `/subcategory/all/${value}` });
+  const getSubcategories = (value) => {
+    return axios({ method: "GET", url: `/subcategory/all/${value}` })
+      .then((data) => {
+        setSubcategories(data.data);
+      })
+      .catch(console.log);
   };
 
   const formik = useFormik({
@@ -75,6 +78,8 @@ export const ProductForm = ({
       subcategory: yup.number().required("Campo obligatorio"),
     }),
     onSubmit: (values) => {
+      console.log(values);
+      console.log(fileBase64);
       const product = {
         ...values,
         category: { id: parseInt(values.category) },
@@ -98,27 +103,11 @@ export const ProductForm = ({
             .then((response) => {
               console.log(response);
               if (!response.error) {
-                getProducts()
-                  .then((response) => {
-                    setProducts(response.data);
-                  })
-                  .catch((error) => {});
+                getProducts();
                 Alert.fire({
                   title: titleExito,
                   text: msjExito,
                   icon: "success",
-                  confirmButtonColor: "#3085d6",
-                  confirmButtonText: "Aceptar",
-                }).then((result) => {
-                  if (result.isConfirmed) {
-                    cancelRegistration();
-                  }
-                });
-              } else {
-                Alert.fire({
-                  title: titleError,
-                  text: msjError,
-                  icon: "error",
                   confirmButtonColor: "#3085d6",
                   confirmButtonText: "Aceptar",
                 }).then((result) => {
@@ -131,9 +120,20 @@ export const ProductForm = ({
             })
             .catch((error) => {
               console.log(error);
+              Alert.fire({
+                title: titleError,
+                text: msjError,
+                icon: "error",
+                confirmButtonColor: "#3085d6",
+                confirmButtonText: "Aceptar",
+              }).then((result) => {
+                if (result.isConfirmed) {
+                  cancelRegistration();
+                }
+              });
             });
         },
-        allowOutsideClick: () => !alert.isLoading(),
+        allowOutsideClick: () => !Alert.isLoading,
       });
     },
   });
@@ -145,18 +145,15 @@ export const ProductForm = ({
   };
 
   useEffect(() => {
-    getCategories()
-      .then((data) => {
-        setCategories(data.data);
-      })
-      .catch(console.log);
+    getCategories();
+    return () => {};
   }, []);
 
   const handleChangeFile = (event) => {
     formik.handleChange(event);
     const file = event.target.files[0];
     let reader = new FileReader();
-    reader.onload = (data) => {
+    reader.onloadend = (data) => {
       setFileBase64(data.target.result);
     };
     reader.readAsDataURL(file);
@@ -166,11 +163,7 @@ export const ProductForm = ({
     const { value } = e.target;
     if (value > 0) {
       formik.handleChange(e);
-      getSubcategories(value)
-        .then((data) => {
-          setSubcategories(data.data);
-        })
-        .catch(console.log);
+      getSubcategories(value);
     } else {
       setSubcategories([]);
     }
@@ -225,6 +218,7 @@ export const ProductForm = ({
                 accept="image/*"
                 type="file"
                 placeholder=""
+                multiple
                 name="file"
                 value={formik.values.file}
                 onChange={handleChangeFile}

@@ -64,6 +64,7 @@ export const Product = () => {
   };
 
   useEffect(() => {
+    document.title = "MKT | Products";
     setIsLoading(true);
     getProducts();
   }, []);
@@ -126,6 +127,13 @@ export const Product = () => {
 
   const columns = [
     {
+      name: "#",
+      cell: (item, index, param, another) => {
+        console.log(another);
+        return <>{index}</>;
+      },
+    },
+    {
       key: "Nombre",
       name: "Nombre",
       selector: (row) => row.name,
@@ -148,6 +156,7 @@ export const Product = () => {
     },
     {
       name: "Estado",
+      selector: (row) => row.status.description,
       cell: (row) => (
         <>
           {row.status.description === "Activo" ? (
@@ -238,7 +247,7 @@ export const Product = () => {
 
   return (
     <>
-      <Card>
+      <Card className="">
         <Card.Header as="h5">
           <Row className="mt-1">
             <Col>Productos</Col>
@@ -271,6 +280,8 @@ export const Product = () => {
             subHeader
             subHeaderComponent={subHeaderComponentMemo}
             persistTableHead
+            striped={true}
+            highlightOnHover={true}
           />
         </Card.Body>
       </Card>

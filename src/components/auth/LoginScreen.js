@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { AuthContext } from "./authContext";
 import axios from "../../shared/plugins/axios";
 import { useFormik } from "formik";
@@ -11,7 +11,7 @@ import Alert from "../../shared/plugins/alert";
 
 export const LoginScreen = () => {
   const navigation = useNavigate();
-  const { dispatch } = useContext(AuthContext);
+  const { user, dispatch } = useContext(AuthContext);
 
   const formik = useFormik({
     initialValues: {
@@ -64,6 +64,9 @@ export const LoginScreen = () => {
     document.title = "MT | Login";
   }, []);
 
+  if (user.logged) {
+    return <Navigate to={"/"} />;
+  }
   return (
     <>
       <section

@@ -11,6 +11,8 @@ import { ProductInfo } from "../home/components/ProductInfo";
 import { HomeScreen } from "../home/HomeScreen";
 import { ProductFormEdit } from "../product/components/ProductFormEdit";
 import { Product } from "../product/Product";
+import { SubcategoryScreen } from "../subcategory/SubcategoryScreen";
+import "animate.css";
 
 export const AppRouter = () => {
   const { user } = useContext(AuthContext);
@@ -29,10 +31,10 @@ export const AppRouter = () => {
                     <Route path="more-info/:id" element={<ProductInfo />} />
                     <Route path="contact" element={<Contact />} />
                     <Route path="home" element={<HomeScreen />} />
-                    <Route index element={<HomeScreen />} />
+                    <Route path="/" element={<HomeScreen />} />
                     <Route path="*" element={<div>404F</div>} />
                   </Routes>
-                </Container>
+                </Container>{" "}
               </>
             ) : (
               <>
@@ -41,6 +43,7 @@ export const AppRouter = () => {
                   <Routes>
                     <Route path="products" element={<Product />} />
                     <Route path="category" element={<CategoryScreen />} />
+                    <Route path="subcategory" element={<SubcategoryScreen />} />
                     <Route
                       path="update-product/:key"
                       element={<ProductFormEdit />}
